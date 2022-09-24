@@ -16,7 +16,7 @@ date: 2022-09-23
 '''
 
 # 配置项
-token = ''
+token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2NjQwNjcyODAsIm5iZiI6MTY2MzgwODgyNywiaWF0IjoxNjYzODA3MDI3LCJqdGkiOiJDTTpjYXRfbWF0Y2g6bHQxMjM0NTYiLCJ1aWQiOjEyMjk0NjY1OCwidmVyIjoiMSIsImV4dCI6IjM2MzMzMjYyNjE2NTMzMzMzMjM4NjM2NDM5MzYzOTYyMzM2NTY0MzUzODYxMzAzNyIsImNvZGUiOiI2Zjk5MzM5YTQ4NDRmYmRjZjVkYWYwOGIyZGZlMzZkNiIsImVuZCI6MTY2NDA2NzI4MDY2MH0.eSkwZd7z03aNdsD_eYtVihrpoq3A9h9jXibF_KVSkMo'
 executeTimes = 9
 winCount = 0
 matchPlayInfo = ''
@@ -74,11 +74,13 @@ def calculateMatchPalyInfo():
 def execute():
     global winCount
     for i in range(0, executeTimes): 
-        requests.get(getMapUrl, headers=headers)
+        mapResutl = requests.get(getMapUrl, headers=headers).json()
+        # 时间戳
+        mapSeed2 = mapResutl['data']['map_seed_2']
         # 休眠60s, 否则无法更新记录成功
         time.sleep(60)
         result = requests.post(reportUrl, headers=headers, 
-                                json={'rank_score': 1, 'rank_state': 1, 'rank_time': 15, 'rank_role': 1, 'skin': 1, 'MatchPlayInfo': matchPlayInfo})
+                                json={'rank_score': 1, 'rank_state': 1, 'rank_time': 15, 'rank_role': 1, 'skin': 1, 'MapSeed2': mapSeed2, 'MatchPlayInfo': matchPlayInfo, 'Version': '0.0.1'})
         print('上传结果', result.text)
         # 检查是否更新成功        
         info = requests.get(getInfoUrl, headers=headers).json()
