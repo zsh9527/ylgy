@@ -3,6 +3,8 @@
 
 import requests
 import time
+import struct
+import base64
 
 describe = '''
 usage: python|python3 main.py
@@ -17,6 +19,7 @@ date: 2022-09-23
 token = ''
 executeTimes = 9
 winCount = 0
+matchPlayInfo = ''
 
 headers = {
     'Accept': '*/*',
@@ -30,7 +33,6 @@ headers = {
 getMapUrl = 'https://cat-match.easygame2021.com/sheep/v1/game/map_info_ex?matchType=3'
 reportUrl = 'https://cat-match.easygame2021.com/sheep/v1/game/game_over_ex?'
 getInfoUrl = 'https://cat-match.easygame2021.com/sheep/v1/game/personal_info?'
-matchPlayInfo = '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'
 
 # 检查token
 def checkToken():
@@ -50,7 +52,24 @@ def checkToken():
     except Exception as e:
         print("请求失败, 请检查token过期或配置不正确")
         exit(1)
-        
+
+# @reference https://www.52pojie.cn/thread-1690631-1-1.html
+def calculateMatchPalyInfo():
+    global matchPlayInfo
+    mapResutl = requests.get(getMapUrl, headers=headers).json()
+    mapMD5 = map_md5 = mapResutl['data']['map_md5'][1]
+    mapsUrl = f'https://cat-match-static.easygame2021.com/maps/{mapMD5}.txt'  # 由于每天获取的地图不一样，需要计算地图大小
+    map = requests.get(mapsUrl).json()
+    levelData = map['levelData']
+    p = []
+    for h in range(len(sum(levelData.values(), []))):  # 生成操作序列
+        p.append({'chessIndex': 127 if h > 127 else h, 'timeTag': 127 if h > 127 else h})
+    GAME_DAILY = 3
+    data = struct.pack('BB', 8, GAME_DAILY)
+    for i in p:
+        c, t = i.values()
+        data += struct.pack('BBBBBB', 34, 4, 8, c, 16, t)
+    matchPlayInfo = base64.b64encode(data).decode('utf-8')
 
 def execute():
     global winCount
@@ -74,5 +93,6 @@ def execute():
 if __name__ == '__main__':
     print(describe)
     checkToken()
+    calculateMatchPalyInfo()
     print('刷新通关次数(每次需要1分钟):', executeTimes)
     execute()
